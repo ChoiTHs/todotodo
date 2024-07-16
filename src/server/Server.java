@@ -2,7 +2,6 @@ package server;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.Connection;
@@ -12,7 +11,6 @@ import java.sql.Statement;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Scanner;
 
 import dbConn.util.ConnectionHelper;
 
@@ -23,11 +21,13 @@ public class Server {  //outer class
 	PreparedStatement pstmtInsert;
 	PreparedStatement pstmtSelect, pstmtSelectScroll;
 	PreparedStatement pstmtSearch, pstmtSearchScroll;
-	PreparedStatement pstmtUsersInsert, pstmtUsersSearch;
+	PreparedStatement pstmtUsersSearch, pstmtUsersScroll;
+	PreparedStatement pstmtUsersInsert;
+	MyModel model;
 	
-	private String sqlUsersInsert = "INSERT INTO USERS VALUES(USERS_SEQ.NEXTVAL, ?, ?, ?, ?, ?)";
+	private String sqlUsersInsert = "INSERT INTO USERS(USERIDX, NICKNAME, PWD, STATUS) VALUES(USERS_SEQ.NEXTVAL, ?, ?, ?)";
 	private String sqlUsersSelect = "SELECT * FROM USERS";
-	private String sqlUsersSearch = "SELECT * FROM USERS WHERE (NAME, PWD) IN (?, ?)";
+	private String sqlUsersSearch = "SELECT * FROM USERS WHERE (NICKNAME = ? AND PWD = ?)";
 	
 	public void dbConnect() {
 		try {
@@ -37,6 +37,8 @@ public class Server {  //outer class
 			pstmtSelect = conn.prepareStatement(sqlUsersSelect);
 			pstmtSearch = conn.prepareStatement(sqlUsersSearch);
 			
+			pstmtSearchScroll = conn.prepareStatement(sqlUsersSearch, ResultSet.TYPE_SCROLL_SENSITIVE,
+					ResultSet.CONCUR_UPDATABLE);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -60,20 +62,36 @@ public class Server {  //outer class
 			System.out.println("서버 시작 되었습니다. 쳇 시작 합시다!!");
 			while(true) {
 				s = ss.accept(); //응답대기, 클라이언트소켓
+				dbConnect();
 				System.out.println("["+s.getInetAddress()+":"+s.getPort()+"] 에서 접속하셨습니다.");
 				
 				dis = new DataInputStream(s.getInputStream());
 				String nickname = dis.readUTF();
 				String pwd = dis.readUTF();
 				
+				pstmtSearchScroll.setString(1, nickname);
+				pstmtSearchScroll.setString(2, pwd);
+				ResultSet rsScroll = pstmtSearchScroll.executeQuery();
+				pstmtSearch.setString(1, nickname);
+				pstmtSearch.setString(2, pwd);
+				ResultSet rs = pstmtSearch.executeQuery();
+				
+				if( model == null ) model = new MyModel();
+				
+				model.getRowCount(rsScroll); 
+				model.setData(rs);
+				
 				pstmtSearch.setString(1, nickname);
 				pstmtSearch.setString(2, pwd);
 				
-				pstmtSearch.executeQuery();
+				if(model.rows < 1) {
+					pstmtInsert.setString(1, nickname);
+					pstmtInsert.setString(2, pwd);
+					pstmtInsert.setInt(3, 1);
+					
+					pstmtInsert.executeQuery();
+				}
 				
-				
-				
-				dbConnect();
 				ServerReceiver thread = new ServerReceiver(s);  // user class
 				thread.start();
 			} //end while
