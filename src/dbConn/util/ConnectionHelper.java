@@ -18,13 +18,9 @@ public class ConnectionHelper {
 	public static Connection getConnection(String dsn) {
 		Connection conn = null;
 		try {
-			if(dsn.equals("mysql")) {
-				Class.forName("com.mysql.jdbc.Driver");
-				conn = DriverManager.getConnection("jdbd:mysql://localhost:3306/SampleDB", "kingsmile", "oracle");
-				
-			} else if(dsn.equals("oracle")) {
+			if(dsn.equals("oracle")) {
 				Class.forName("oracle.jdbc.OracleDriver");
-				conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:xe", "kingsmile", "oracle");
+				conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:xe", "todo_test", "blackpink");
 				System.out.println("connection success!!");
 			}
 		} catch (Exception e) {

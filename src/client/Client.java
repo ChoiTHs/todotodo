@@ -1,56 +1,25 @@
 package client;
 
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.Socket;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.Scanner;
 
-import dbConn.util.ConnectionHelper;
-
 public class Client {
-
-	Connection conn;
-	Statement stmt;
-	PreparedStatement pstmtInsert, pstmtDlete;
-	PreparedStatement pstmtSelect, pstmtSelectScroll;
-	PreparedStatement pstmtSearch, pstmtSearchScroll;
-	
-	private String sqlInsert = "insert into customers values(?,?,?,?)";
-	private String sqlDelete = "delete from customers where code = ?";
-	private String sqlSelect = "select * from customers";
-	private String sqlSearch = "select * from customers where name = ?";
-	
-	public void dbConnect() {
-		try {
-			conn = ConnectionHelper.getConnection("oracle");
-			
-			pstmtInsert = conn.prepareStatement(sqlInsert);
-			pstmtDlete = conn.prepareStatement(sqlDelete);
-			pstmtSelect = conn.prepareStatement(sqlSelect);
-			pstmtSearch = conn.prepareStatement(sqlSearch);
-			
-			pstmtSelectScroll = conn.prepareStatement(sqlSelect,ResultSet.TYPE_SCROLL_SENSITIVE,// 커서 이동을 자유롭게
-													ResultSet.CONCUR_UPDATABLE);// 업데이트 내용을 반영한다.
-			// resultset object 의 변경이 가능 <==> CONCUR_READ_ONLY
-			
-			pstmtSearchScroll = conn.prepareStatement(sqlSearch, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
-			
-			System.out.println("connection success!!!");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	//db 연결 끝///
 	
 	public static void main(String[] args) {
-		if( args.length != 1 ) {
+		
+		Client();
+	}//end main
+	
+	private static void Client() {
+		
+		System.out.println("이름을 입력하세요");
+		String nickname = new Scanner(System.in).nextLine();
+		System.out.println("비밀번호를 입력해주세요");
+		String pwd = new Scanner(System.in).nextLine();
+		
+		if( nickname.length() < 1 ) {
 			System.out.println("USAGE : java TcpMultiChatClient nickName ? ");
 			System.exit(0);
 		}
@@ -59,13 +28,14 @@ public class Client {
 			Socket s = new Socket(ip, 7799);
 			System.out.println("서버에 연결 되었습니다.");
 			
-			Thread sender = new Thread(new ClientSender(s, args[0]));
+			Thread sender = new Thread(new ClientSender(s, nickname));
 			Thread receiver = new Thread(new ClientReceiver(s));
 			
 			sender.start();			receiver.start();  // run() 메소드 유도
+			System.out.println("송/수신 활성화");
 		} catch (Exception e) {	e.printStackTrace(); }
-	}//end main
-	
+	}
+
 	static class ClientSender extends Thread { //inner class
 		Socket s;
 		DataOutputStream dos;
