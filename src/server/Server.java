@@ -23,26 +23,20 @@ public class Server {  //outer class
 	PreparedStatement pstmtInsert;
 	PreparedStatement pstmtSelect, pstmtSelectScroll;
 	PreparedStatement pstmtSearch, pstmtSearchScroll;
+	PreparedStatement pstmtUsersInsert, pstmtUsersSearch;
 	
-	private String sqlInsert = "INSERT INTO USERS VALUES(USERS_SEQ, ?, ?, ?, ?, ?)";
-	private String sqlSelect = "select * from users";
-	private String sqlSearch = "select * from users where name = ?";
+	private String sqlUsersInsert = "INSERT INTO USERS VALUES(USERS_SEQ.NEXTVAL, ?, ?, ?, ?, ?)";
+	private String sqlUsersSelect = "SELECT * FROM USERS";
+	private String sqlUsersSearch = "SELECT * FROM USERS WHERE (NAME, PWD) IN (?, ?)";
 	
 	public void dbConnect() {
 		try {
 			conn = ConnectionHelper.getConnection("oracle");
 			
-			pstmtInsert = conn.prepareStatement(sqlInsert);
-			pstmtSelect = conn.prepareStatement(sqlSelect);
-			pstmtSearch = conn.prepareStatement(sqlSearch);
+			pstmtInsert = conn.prepareStatement(sqlUsersInsert);
+			pstmtSelect = conn.prepareStatement(sqlUsersSelect);
+			pstmtSearch = conn.prepareStatement(sqlUsersSearch);
 			
-			pstmtSelectScroll = conn.prepareStatement(sqlSelect,ResultSet.TYPE_SCROLL_SENSITIVE,// 커서 이동을 자유롭게
-													ResultSet.CONCUR_UPDATABLE);// 업데이트 내용을 반영한다.
-			// resultset object 의 변경이 가능 <==> CONCUR_READ_ONLY
-			
-			pstmtSearchScroll = conn.prepareStatement(sqlSearch, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
-			
-			System.out.println("connection success!!!");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -59,6 +53,7 @@ public class Server {  //outer class
 	public void start() {  //user method
 		ServerSocket ss = null;  // server socket 1
 		Socket s = null; // client socket 1
+		DataInputStream dis;
 		
 		try {
 			ss = new ServerSocket(7799);
@@ -66,6 +61,18 @@ public class Server {  //outer class
 			while(true) {
 				s = ss.accept(); //응답대기, 클라이언트소켓
 				System.out.println("["+s.getInetAddress()+":"+s.getPort()+"] 에서 접속하셨습니다.");
+				
+				dis = new DataInputStream(s.getInputStream());
+				String nickname = dis.readUTF();
+				String pwd = dis.readUTF();
+				
+				pstmtSearch.setString(1, nickname);
+				pstmtSearch.setString(2, pwd);
+				
+				pstmtSearch.executeQuery();
+				
+				
+				
 				dbConnect();
 				ServerReceiver thread = new ServerReceiver(s);  // user class
 				thread.start();

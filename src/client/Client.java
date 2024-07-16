@@ -14,6 +14,8 @@ public class Client {
 	
 	private static void Client() {
 		
+		DataOutputStream dos;
+		
 		System.out.println("이름을 입력하세요");
 		String nickname = new Scanner(System.in).nextLine();
 		System.out.println("비밀번호를 입력해주세요");
@@ -27,6 +29,11 @@ public class Client {
 			String ip = "127.0.0.1"; // "127.0.0.1" or "192.168.0.61"
 			Socket s = new Socket(ip, 7799);
 			System.out.println("서버에 연결 되었습니다.");
+			
+			
+			dos = new DataOutputStream(s.getOutputStream());
+			dos.writeUTF(nickname);
+			dos.writeUTF(pwd);
 			
 			Thread sender = new Thread(new ClientSender(s, nickname));
 			Thread receiver = new Thread(new ClientReceiver(s));
