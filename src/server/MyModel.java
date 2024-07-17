@@ -49,7 +49,7 @@ public class MyModel extends AbstractTableModel {
 				columnName[i] = rsmd.getColumnName(i+1); // 데이터베이스 필드 번호는 1부터 시작함 
 			}
 			
-			data = new Object[rows][cols];
+			data = new Object[getRows()][cols];
 			int r = 0;
 			
 			while( rs.next() ) {
@@ -67,6 +67,10 @@ public class MyModel extends AbstractTableModel {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public int getRows() {
+		return rows;
 	}
 
 }
