@@ -53,7 +53,6 @@ public class Todo_Controller {
             }
 
             String pwd_reg = "^\\d{4}$";
-           
 
             if (!pwd.matches(pwd_reg)) {
                 return "다시 입력해주세요. (숫자만으로 이뤄진 4자리)";
@@ -97,14 +96,12 @@ public class Todo_Controller {
     }
 
     // 로그인/ 로그아웃
-    public static String login(String name, String pwd) {
+    public static String login(String name, int pwd) {
         String str = TodoLogInOutController.login(name, pwd);
-
         return str;
     }
-    public static String logout(String user) {
-    	String str = TodoLogInOutController.logout(user);
-    	
+    public static String logout(String name) {
+    	String str = TodoLogInOutController.logout(name);
     	return str;
     }
 
